@@ -180,21 +180,22 @@ aoclsparse_status aoclsparse_csrmv_vectorized(const double               alpha,
         const double             beta,
         double* __restrict__        y)
 {
-    __m256d vec_vals , vec_x , vec_y;
-    const aoclsparse_int *colIndPtr;
-    const double *matValPtr;
-    matValPtr = &csr_val[csr_row_ptr[0]];
-    colIndPtr = &csr_col_ind[csr_row_ptr[0]];
+
 
 #pragma omp parallel for
     for(aoclsparse_int i = 0; i < m; i++)
     {
+        __m256d vec_vals , vec_x , vec_y;
+        const aoclsparse_int *colIndPtr;
+        const double *matValPtr;
+        matValPtr = &csr_val[csr_row_ptr[i]];
+        colIndPtr = &csr_col_ind[csr_row_ptr[i]];
         aoclsparse_int j;
         double result = 0.0;
         vec_y = _mm256_setzero_pd();
-        aoclsparse_int nnz = csr_row_ptr[i+1] - csr_row_ptr[i]; 
-        aoclsparse_int k_iter = nnz/4;
-        aoclsparse_int k_rem = nnz%4;
+        aoclsparse_int nnzThisLine = csr_row_ptr[i + 1] - csr_row_ptr[i];
+        aoclsparse_int k_iter = nnzThisLine / 4;
+        aoclsparse_int k_rem = nnzThisLine % 4;
 
         //Loop in multiples of 4 non-zeroes
         for(j =  0 ; j < k_iter ; j++ )		
@@ -228,7 +229,7 @@ aoclsparse_status aoclsparse_csrmv_vectorized(const double               alpha,
             result = sse_sum[0];
         }
 
-        //Remainder loop for nnz%4
+        //Remainder loop for nnzThisLine%4
         for(j =  0 ; j < k_rem ; j++ )		
         {
             result += *matValPtr++ * x[*colIndPtr++];
