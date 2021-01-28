@@ -186,6 +186,7 @@ aoclsparse_status aoclsparse_csrmv_vectorized(const double               alpha,
     matValPtr = &csr_val[csr_row_ptr[0]];
     colIndPtr = &csr_col_ind[csr_row_ptr[0]];
 
+#pragma omp parallel for
     for(aoclsparse_int i = 0; i < m; i++)
     {
         aoclsparse_int j;

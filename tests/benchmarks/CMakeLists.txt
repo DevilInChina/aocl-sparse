@@ -26,7 +26,7 @@ set(Boost_DETAILED_FAILURE_MSG ON)
 set(Boost_ADDITIONAL_VERSIONS 1.65.1 1.65)
 set(Boost_USE_STATIC_LIBS OFF)
 set(THREADS_PREFER_PTHREAD_FLAG ON)
-
+include_directories(/home/kouushou/Downloads/boost_1_72_0)
 find_package(Threads REQUIRED)
 find_package(Boost COMPONENTS program_options)
 

@@ -21,6 +21,7 @@
  * 
  * ************************************************************************ */
 
+#include <iostream>
 #include "aoclsparse.h"
 #include "aoclsparse_ellmv.hpp"
 
