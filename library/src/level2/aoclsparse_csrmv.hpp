@@ -134,19 +134,20 @@ aoclsparse_status aoclsparse_csrmv_general(const double               alpha,
         const double             beta,
         double* __restrict__        y)
 {
-    const aoclsparse_int *colIndPtr;
-    const double *matValPtr;
-    matValPtr = &csr_val[csr_row_ptr[0]];
-    colIndPtr = &csr_col_ind[csr_row_ptr[0]];
 
     // Iterate over each row of the input matrix and
     // Perform matrix-vector product for each non-zero of the ith row
+#pragma omp parallel for
     for(aoclsparse_int i = 0; i < m; i++)
     {
+        const aoclsparse_int *colIndPtr;
+        const double *matValPtr;
+        matValPtr = &csr_val[csr_row_ptr[i]];
+        colIndPtr = &csr_col_ind[csr_row_ptr[i]];
         double result = 0.0;
-        aoclsparse_int nnz = csr_row_ptr[i+1] - csr_row_ptr[i];
+        aoclsparse_int nnzThisLine = csr_row_ptr[i + 1] - csr_row_ptr[i];
 
-        for(aoclsparse_int j =  0 ; j < nnz ; j++ )
+        for(aoclsparse_int j =  0 ; j < nnzThisLine ; j++ )
         {
             result += *matValPtr++ * x[*colIndPtr++];
         }
