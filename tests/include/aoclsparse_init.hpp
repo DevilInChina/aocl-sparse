@@ -361,7 +361,7 @@ inline void aoclsparse_init_coo_mtx(const char*                 filename,
     const char* env = getenv("GTEST_LISTENER");
     if(!env || strcmp(env, "NO_PASS_LINE_IN_LOG"))
     {
-        std::cout << "Reading matrix " << filename << " ... ";
+        //std::cout << "Reading matrix " << filename << " ... ";
     }
 
     FILE* f = fopen(filename, "r");

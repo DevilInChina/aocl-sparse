@@ -88,7 +88,6 @@ aoclsparse_status aoclsparse_ellmv(const double               alpha,
     __m256d vec_vals , vec_x , vec_y;	
     aoclsparse_int k_iter = ell_width/4;
     aoclsparse_int k_rem = ell_width%4;
-
 #pragma omp parallel for
     for(aoclsparse_int i = 0; i < m; ++i)
     {

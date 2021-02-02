@@ -27,6 +27,7 @@
 #include "aoclsparse_functions.h"
 #include "aoclsparse_types.h"
 #include "aoclsparse_version.h"
+#include <omp.h>
 
 #endif // AOCLSPARSE_H_
 

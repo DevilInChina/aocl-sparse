@@ -34,6 +34,7 @@
 #include "aoclsparse_check.hpp"
 #include "utility.hpp"
 #include "aoclsparse_random.hpp"
+#include <cstdio>
 template <typename T>
 void testing_csrmv(const Arguments& arg)
 {
@@ -119,50 +120,42 @@ void testing_csrmv(const Arguments& arg)
     }
     int number_hot_calls  = arg.iters;
 
-    double cpu_time_used = 1e9;
+    for(int threads = 64 ; threads <= 256 ; threads<<=1) {
+        omp_set_num_threads(threads);
+        double cpu_time_used = 0;
+        double min_time = 1e9;
+        // Performance run
+        for (int iter = 0; iter < number_hot_calls; ++iter) {
+            double cpu_time_start = get_time_us();
+            CHECK_AOCLSPARSE_ERROR(aoclsparse_csrmv(trans,
+                                                    &h_alpha,
+                                                    M,
+                                                    N,
+                                                    nnz,
+                                                    hcsr_val.data(),
+                                                    hcsr_col_ind.data(),
+                                                    hcsr_row_ptr.data(),
+                                                    descr,
+                                                    hx.data(),
+                                                    &h_beta,
+                                                    hy.data()));
+            double cpu_time_stop = get_time_us();
+            double time_current = (cpu_time_stop - cpu_time_start);
+            cpu_time_used += time_current;
+            min_time = std::min(min_time, time_current);
+        }
 
-    // Performance run
-    for(int iter = 0; iter < number_hot_calls; ++iter)
-    {
-        double cpu_time_start = get_time_us();
-        CHECK_AOCLSPARSE_ERROR(aoclsparse_csrmv(trans,
-                                                 &h_alpha,
-                                                 M,
-                                                 N,
-                                                 nnz,
-                                                 hcsr_val.data(),
-                                                 hcsr_col_ind.data(),
-                                                 hcsr_row_ptr.data(),
-                                                 descr,
-                                                 hx.data(),
-                                                 &h_beta,
-                                                 hy.data()));
-        double cpu_time_stop = get_time_us();
-        cpu_time_used = std::min(cpu_time_used , (cpu_time_stop - cpu_time_start) );
+
+        cpu_time_used /= number_hot_calls;
+        double cpu_gflops
+                = spmv_gflop_count<T>(M, nnz, h_beta != static_cast<T>(0)) / cpu_time_used * 1e6;
+
+        double cpu_gflops_max
+                = spmv_gflop_count<T>(M, nnz, h_beta != static_cast<T>(0)) / min_time * 1e6;
+        printf("%s,AOCL_SPMV,AVX_ON_CHOOSE,%d,%d,%f,%f,%f,%f,%f\n", arg.filename
+                , threads, nnz, 0.0,
+               0.0, cpu_time_used, cpu_gflops,cpu_gflops_max);
     }
-
-
-    double cpu_gflops
-        = spmv_gflop_count<T>(M, nnz, h_beta != static_cast<T>(0)) / cpu_time_used * 1e6;
-    double cpu_gbyte
-        = csrmv_gbyte_count<T>(M, N, nnz, h_beta != static_cast<T>(0)) / cpu_time_used * 1e6;
-
-    std::cout.precision(2);
-    std::cout.setf(std::ios::fixed);
-    std::cout.setf(std::ios::left);
-
-    std::cout << std::setw(12) << "M" << std::setw(12) << "N" << std::setw(12) << "nnz"
-              << std::setw(12) << "alpha" << std::setw(12) << "beta" << std::setw(12)
-              << "GFlop/s" << std::setw(12) << "GB/s"
-              << std::setw(12) << "msec" << std::setw(12) << "iter" << std::setw(12)
-              << "verified" << std::endl;
-
-    std::cout << std::setw(12) << M << std::setw(12) << N << std::setw(12) << nnz
-              << std::setw(12) << h_alpha << std::setw(12) << h_beta << std::setw(12)
-              << cpu_gflops
-              << std::setw(12) << cpu_gbyte << std::setw(12) << cpu_time_used / 1e3
-              << std::setw(12) << number_hot_calls << std::setw(12)
-              << (arg.unit_check ? "yes" : "no") << std::endl;
 } 
 
 #endif // TESTING_CSRMV_HPP
